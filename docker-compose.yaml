@@ -2,6 +2,6 @@ version: '3.9'
 
 services:
   web:
-    image: paras750/node-todo-test:latest
+    image: paras750/node_app_img:latest
     ports:
       - "8000:8000"
