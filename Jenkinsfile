@@ -6,7 +6,7 @@ pipeline {
                 git url: 'https://github.com/paras-prajapati/node-todo-cicd.git' , branch: 'master' 
             }
         }
-        stage('Build') { 
+        stage('Build and Test') { 
             steps {
                 sh 'docker build . -t paras750/node_app_img:latest' 
             }
@@ -18,11 +18,6 @@ pipeline {
                         echo 'Login Completed'
                   sh 'docker push paras750/node_app_img:latest'
                  }
-            }
-        }
-        stage('Test') { 
-            steps {
-                echo "Testing the build"
             }
         }
         stage('Deploy') { 
