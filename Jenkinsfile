@@ -1,31 +1,67 @@
 pipeline {
-
     agent { label 'agent-01-label' }
-    
+
+    environment {
+        DOCKER_IMAGE = 'paras750/node_app_img:latest'
+        REPO_URL = 'https://github.com/paras-prajapati/node-todo-cicd.git'
+        BRANCH = 'master'
+    }
+
     stages {
-        stage('Checkout') { 
+        stage('Cleanup Workspace') {
             steps {
-                git url: 'https://github.com/paras-prajapati/node-todo-cicd.git' , branch: 'master' 
+                // Clean up the workspace to avoid leftover files from previous builds
+                deleteDir()  
             }
         }
-        stage('Build and Test') { 
+
+        stage('Checkout') {
             steps {
-                sh 'docker build . -t paras750/node_app_img:latest' 
+                git url: "${REPO_URL}", branch: "${BRANCH}"
             }
         }
-        stage('Push') { 
+
+        stage('Build and Test') {
+            steps {
+                script {
+                    // Build the Docker image
+                    sh 'docker build . -t ${DOCKER_IMAGE}'
+                }
+            }
+        }
+
+        stage('Push') {
             steps {
                 withCredentials([usernamePassword(credentialsId: 'dockerhub-token', passwordVariable: 'DOCKERHUB_CREDENTIALS_PSW', usernameVariable: 'DOCKERHUB_CREDENTIALS_USR')]) {
-                  sh 'docker login -u ${DOCKERHUB_CREDENTIALS_USR} -p ${DOCKERHUB_CREDENTIALS_PSW}'
-                        echo 'Login Completed'
-                  sh 'docker push paras750/node_app_img:latest'
-                 }
+                    sh 'docker login -u ${DOCKERHUB_CREDENTIALS_USR} -p ${DOCKERHUB_CREDENTIALS_PSW}'
+                    echo 'Docker login completed'
+                    sh 'docker push ${DOCKER_IMAGE}'
+                }
             }
         }
-        stage('Deploy') { 
+
+        stage('Deploy') {
             steps {
-                sh 'docker-compose down && docker-compose up -d'
+                script {
+                    // Deploy using Docker Compose
+                    sh 'docker-compose down && docker-compose up -d'
+                }
             }
+        }
+    }
+
+    post {
+        always {
+            // Clean up the workspace after pipeline completes
+            cleanWs()  // Cleans up files created during the pipeline
+        }
+
+        success {
+            echo "Pipeline completed successfully!"
+        }
+
+        failure {
+            echo "Pipeline failed. Please check the logs."
         }
     }
 }
