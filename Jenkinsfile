@@ -8,13 +8,6 @@ pipeline {
     }
 
     stages {
-        stage('Cleanup Workspace') {
-            steps {
-                // Clean up the workspace to avoid leftover files from previous builds
-                deleteDir()  
-            }
-        }
-
         stage('Checkout') {
             steps {
                 git url: "${REPO_URL}", branch: "${BRANCH}"
@@ -52,8 +45,9 @@ pipeline {
 
     post {
         always {
-            // Clean up the workspace after pipeline completes
-            cleanWs()  // Cleans up files created during the pipeline
+            // Clean up only temporary files if needed (e.g., Docker build cache)
+            // Keep the main workspace intact
+            cleanWs()  // Cleans up files created during the pipeline but not the entire workspace
         }
 
         success {
